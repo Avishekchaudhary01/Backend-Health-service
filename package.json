@@ -1,8 +1,14 @@
 {
-  "name": "backend-health-service",
+  "name": "swynex-api-project-setup",
   "version": "1.0.0",
-  "description": "A simple Node.js backend service with a health-check endpoint.",
+  "description": "A Node.js and Express backend API with a health-check endpoint and environment configuration.",
   "main": "src/server.js",
-  "scripts": { "start": "node src/server.js", "dev": "node --watch src/server.js" },
-  "dependencies": { "dotenv": "^16.4.7", "express": "^4.21.2" }
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
 }
