@@ -1,13 +1,14 @@
 {
   "name": "swynex-api-project-setup",
-  "version": "1.0.0",
-  "description": "A Node.js and Express backend API with a health-check endpoint and environment configuration.",
+  "version": "1.1.0",
+  "description": "A Node.js and Express backend API with SQLite persistence and full CRUD operations.",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js"
   },
   "dependencies": {
+    "better-sqlite3": "^12.2.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2"
   }
