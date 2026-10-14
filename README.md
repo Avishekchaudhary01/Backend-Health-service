@@ -126,6 +126,14 @@ You can test using Postman or any HTTP client.
 
 For POST and PUT requests, select JSON as the body type. Invalid input returns HTTP `400`; a missing task returns HTTP `404`.
 
+## Postman collection
+
+Import `postman/SWYNEX-API-Task2-CRUD.postman_collection.json` into Postman to try the health-check and CRUD requests. Start the API locally first with `npm start`; the collection uses `http://localhost:3000` by default. Create a task before trying the get-by-ID, update, or delete requests, and replace the example ID `1` with the ID returned by your create request if needed.
+
+## Task 2 verification
+
+The CRUD routes were tested locally with Postman during development: create returned `201 Created`, and list, update, and delete returned successful `2xx` responses. Response values and task IDs depend on the local database state.
+
 ## License
 
 Created for learning and API CRUD practice.
