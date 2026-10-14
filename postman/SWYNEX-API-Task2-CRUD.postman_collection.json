@@ -1,0 +1,87 @@
+{
+  "info": {
+    "name": "SWYNEX API — Task 2 CRUD",
+    "description": "Sample requests for the SWYNEX API tasks resource. Start the local server before sending requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "Create Task",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Learn Node.js\",\n  \"description\": \"Complete Task 2 CRUD project\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/tasks"
+      }
+    },
+    {
+      "name": "List Tasks",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/tasks"
+      }
+    },
+    {
+      "name": "Get Task by ID",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/tasks/1"
+      }
+    },
+    {
+      "name": "Update Task",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"completed\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/tasks/1"
+      }
+    },
+    {
+      "name": "Delete Task",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/tasks/1"
+      }
+    }
+  ]
+}
