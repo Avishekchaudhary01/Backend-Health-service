@@ -1,23 +1,22 @@
-# SWYNEX API Project Setup — Database & CRUD
+# SWYNEX API — Task 3: Authentication, Validation, and Integration
 
-A beginner-friendly Node.js and Express API with persistent SQLite storage, validation, and CRUD operations for a `tasks` resource.
+A Node.js + Express REST API with SQLite persistence, protected task endpoints, payload validation, and consistent JSON errors.
 
 ## Features
 
-- `GET /` — service welcome message
-- `GET /health` — service status, uptime, timestamp, and environment
-- `POST /tasks` — create a task
-- `GET /tasks` — list all tasks
-- `GET /tasks/:id` — fetch one task
-- `PUT /tasks/:id` — update task fields
-- `DELETE /tasks/:id` — delete a task
-- SQLite persistence using `better-sqlite3`
-- Basic request validation and JSON error responses
-- Environment configuration with `dotenv`
+- Public `GET /` and `GET /health` health endpoints
+- SQLite persistence through `better-sqlite3`
+- Full task CRUD endpoints
+- API-key authentication using the `x-api-key` header
+- Timing-safe API-key comparison
+- Validation for required/unknown fields, title and description lengths, boolean completion state, and positive integer IDs
+- Consistent error response shape for API errors
+- JSON body limit of 10 KB
+- Postman collections for CRUD and Task 3 authentication testing
 
 ## Requirements
 
-- Node.js 18 or newer
+- Node.js 18+
 - npm
 
 ## Setup
@@ -28,7 +27,7 @@ cd SWYNEX-API-Project-Setup
 npm install
 ```
 
-Create a local `.env` file from the example.
+Create your local environment file.
 
 PowerShell:
 ```powershell
@@ -40,100 +39,127 @@ macOS/Linux:
 cp .env.example .env
 ```
 
+Open `.env` and replace the example `API_KEY` with a long, unique secret. Keep `.env` private; it is excluded from Git. Do not use the example key in a deployed application.
+
 Start the server:
 ```bash
 npm start
 ```
 
-Development mode (restarts when files change):
-```bash
-npm run dev
-```
-
-By default, the server runs at `http://localhost:3000`. The SQLite database is created automatically at `data/tasks.db` on first start. The local database is excluded from Git.
+The default URL is `http://localhost:3000`. SQLite creates `data/tasks.db` automatically. The `data/` directory and database files are excluded from Git.
 
 ## Environment variables
 
-| Variable | Default | Description |
+| Variable | Default/example | Purpose |
 |---|---|---|
-| `PORT` | `3000` | HTTP server port |
-| `NODE_ENV` | `development` | Runtime environment label |
+| `PORT` | `3000` | HTTP port |
+| `NODE_ENV` | `development` | Environment label |
+| `API_KEY` | Set in your local `.env` | Secret required for all `/tasks` endpoints |
 
-Never commit your real `.env` file.
+If `API_KEY` is missing, task routes return `503 AUTH_NOT_CONFIGURED` rather than becoming unprotected.
 
-## API endpoints
+## Endpoints
 
-### Health check — `GET /health`
+| Method | Endpoint | Authentication |
+|---|---|---|
+| GET | `/` | Public |
+| GET | `/health` | Public |
+| POST | `/tasks` | `x-api-key` required |
+| GET | `/tasks` | `x-api-key` required |
+| GET | `/tasks/:id` | `x-api-key` required |
+| PUT | `/tasks/:id` | `x-api-key` required |
+| DELETE | `/tasks/:id` | `x-api-key` required |
 
-Example response:
-```json
-{
-  "status": "ok",
-  "uptime": 12.345,
-  "timestamp": "2026-10-14T04:00:00.000Z",
-  "environment": "development"
-}
+### Authentication
+
+For every task request, add this header in Postman:
+
+```
+x-api-key: YOUR_LOCAL_API_KEY
 ```
 
-The uptime and timestamp vary on each request.
+Use the exact value configured in your local `.env` file. The health endpoints remain public so they can be checked without credentials.
 
-### Create a task — `POST /tasks`
+### Create a task
 
-Send header `Content-Type: application/json` and this JSON body:
+`POST http://localhost:3000/tasks`
+
+Headers: `Content-Type: application/json`, `x-api-key: YOUR_LOCAL_API_KEY`
+
+Body:
 ```json
 {
   "title": "Learn Node.js",
-  "description": "Finish the CRUD task"
+  "description": "Complete Task 3",
+  "completed": false
 }
 ```
 
-Returns HTTP `201 Created` and the stored task, including its generated ID.
+Returns `201 Created`.
 
-### List tasks — `GET /tasks`
+### Read tasks
 
-Returns a JSON array of saved tasks. A new database returns an empty array.
+- `GET http://localhost:3000/tasks` — list tasks
+- `GET http://localhost:3000/tasks/1` — get a task by ID
 
-### Get one task — `GET /tasks/1`
+Both require the API-key header.
 
-Replace `1` with the task ID. Returns `404` if it does not exist.
+### Update a task
 
-### Update a task — `PUT /tasks/1`
+`PUT http://localhost:3000/tasks/1`
 
-All fields are optional for partial updates. Example:
+Body:
 ```json
 {
   "completed": true
 }
 ```
 
-Allowed fields: `title` (non-empty string), `description` (string), and `completed` (boolean).
+Partial updates are supported. At least one valid field must be provided.
 
-### Delete a task — `DELETE /tasks/1`
+### Delete a task
 
-Deletes the task with that ID and returns a confirmation message. Returns `404` if no task exists.
+`DELETE http://localhost:3000/tasks/1`
 
-## Sample requests
+Replace `1` with the ID of an existing task.
 
-You can test using Postman or any HTTP client.
+## Consistent error responses
 
-| Method | URL | Purpose |
-|---|---|---|
-| POST | `http://localhost:3000/tasks` | Create task |
-| GET | `http://localhost:3000/tasks` | List tasks |
-| GET | `http://localhost:3000/tasks/1` | Get task by ID |
-| PUT | `http://localhost:3000/tasks/1` | Update task |
-| DELETE | `http://localhost:3000/tasks/1` | Delete task |
+All API errors use this shape:
+```json
+{
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "A valid x-api-key header is required"
+  }
+}
+```
 
-For POST and PUT requests, select JSON as the body type. Invalid input returns HTTP `400`; a missing task returns HTTP `404`.
+Common status codes:
 
-## Postman collection
+- `400 VALIDATION_ERROR` — invalid body or ID
+- `401 UNAUTHORIZED` — missing or incorrect API key
+- `404 NOT_FOUND` — task does not exist
+- `404 ROUTE_NOT_FOUND` — unknown endpoint
+- `413 PAYLOAD_TOO_LARGE` — JSON body exceeds 10 KB
+- `503 AUTH_NOT_CONFIGURED` — server's API key is not configured
+- `500 INTERNAL_SERVER_ERROR` — unexpected server error
 
-Import `postman/SWYNEX-API-Task2-CRUD.postman_collection.json` into Postman to try the health-check and CRUD requests. Start the API locally first with `npm start`; the collection uses `http://localhost:3000` by default. Create a task before trying the get-by-ID, update, or delete requests, and replace the example ID `1` with the ID returned by your create request if needed.
+## Test with Postman
 
-## Task 2 verification
+Import `postman/SWYNEX-API-Task3-Auth-Validation.postman_collection.json`.
 
-The CRUD routes were tested locally with Postman during development: create returned `201 Created`, and list, update, and delete returned successful `2xx` responses. Response values and task IDs depend on the local database state.
+1. Start the API with `npm start`.
+2. In the imported collection, edit the collection variable `apiKey` and set it to the same value as your local `.env` `API_KEY`.
+3. Run **Health Check** (no key required).
+4. Run **Protected route — missing key**; it should return `401`.
+5. Run **List tasks — valid key**; it should return `200`.
+6. Run **Create task — valid key**; it should return `201`.
+7. Try **Create task — invalid payload**; it should return `400`.
+8. Use a real task ID for get, update, and delete requests.
 
-## License
+The collection contains an example variable only. Do not save or commit a real API key in the repository.
 
-Created for learning and API CRUD practice.
+## Previous task
+
+The same repository retains the Task 2 SQLite CRUD implementation. This version extends it with authentication, stronger validation, and standard error responses.
