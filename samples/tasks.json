@@ -1,0 +1,17 @@
+[
+  {
+    "title": "Learn Node.js",
+    "description": "Complete the backend API task",
+    "completed": false
+  },
+  {
+    "title": "Test authentication",
+    "description": "Verify the x-api-key header",
+    "completed": true
+  },
+  {
+    "title": "Prepare deployment",
+    "description": "Check the public health endpoint",
+    "completed": false
+  }
+]
