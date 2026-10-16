@@ -19,15 +19,15 @@ const dataDir = path.join(__dirname, "..", "data");
 fs.mkdirSync(dataDir, { recursive: true });
 const db = new Database(path.join(dataDir, "tasks.db"));
 
-db.exec(\`
-  CREATE TABLE IF NOT EXISTS tasks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    description TEXT NOT NULL DEFAULT '',
-    completed INTEGER NOT NULL DEFAULT 0 CHECK (completed IN (0, 1)),
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-  )
-\`);
+db.exec(
+  "CREATE TABLE IF NOT EXISTS tasks (" +
+  "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+  "title TEXT NOT NULL, " +
+  "description TEXT NOT NULL DEFAULT '', " +
+  "completed INTEGER NOT NULL DEFAULT 0 CHECK (completed IN (0, 1)), " +
+  "created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP" +
+  ")"
+);
 
 function sendError(res, status, code, message) {
   return res.status(status).json({ error: { code, message } });
@@ -62,7 +62,7 @@ function validateTaskPayload(body, { partial = false } = {}) {
 
   const allowed = new Set(["title", "description", "completed"]);
   const unknown = Object.keys(body).find((key) => !allowed.has(key));
-  if (unknown) return \`Unknown field: \${unknown}\`;
+  if (unknown) return "Unknown field: " + unknown;
 
   if (!partial && (typeof body.title !== "string" || !body.title.trim())) {
     return "title is required and must be a non-empty string";
@@ -114,7 +114,6 @@ app.get("/health", (req, res) => {
 // Authentication applies to create, read, update, and delete routes.
 app.use("/tasks", requireApiKey);
 
-// CREATE: POST /tasks
 app.post("/tasks", (req, res) => {
   const validationError = validateTaskPayload(req.body);
   if (validationError) return sendError(res, 400, "VALIDATION_ERROR", validationError);
@@ -129,13 +128,11 @@ app.post("/tasks", (req, res) => {
   return res.status(201).json(task);
 });
 
-// READ ALL: GET /tasks
 app.get("/tasks", (req, res) => {
   const tasks = db.prepare("SELECT * FROM tasks ORDER BY id DESC").all();
   return res.status(200).json(tasks);
 });
 
-// READ ONE: GET /tasks/:id
 app.get("/tasks/:id", (req, res) => {
   const id = parseTaskId(req.params.id);
   if (!id) return sendError(res, 400, "VALIDATION_ERROR", "id must be a positive integer");
@@ -145,7 +142,6 @@ app.get("/tasks/:id", (req, res) => {
   return res.status(200).json(task);
 });
 
-// UPDATE: PUT /tasks/:id (partial updates supported)
 app.put("/tasks/:id", (req, res) => {
   const id = parseTaskId(req.params.id);
   if (!id) return sendError(res, 400, "VALIDATION_ERROR", "id must be a positive integer");
@@ -168,7 +164,6 @@ app.put("/tasks/:id", (req, res) => {
   return res.status(200).json(updated);
 });
 
-// DELETE: DELETE /tasks/:id
 app.delete("/tasks/:id", (req, res) => {
   const id = parseTaskId(req.params.id);
   if (!id) return sendError(res, 400, "VALIDATION_ERROR", "id must be a positive integer");
@@ -197,7 +192,7 @@ app.use((err, req, res, next) => {
 });
 
 const server = app.listen(PORT, () => {
-  console.log(\`Server is running at http://localhost:\${PORT}\`);
+  console.log("Server is running at http://localhost:" + PORT);
 });
 
 function shutdown() {
