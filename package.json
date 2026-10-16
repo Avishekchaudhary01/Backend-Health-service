@@ -1,8 +1,11 @@
 {
   "name": "swynex-api-project-setup",
-  "version": "1.1.0",
-  "description": "A Node.js and Express backend API with SQLite persistence and full CRUD operations.",
+  "version": "1.2.0",
+  "description": "Deployable Node.js and Express REST API with SQLite CRUD, API-key authentication, and validation.",
   "main": "src/server.js",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js"
