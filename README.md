@@ -1,165 +1,86 @@
-# SWYNEX API — Task 3: Authentication, Validation, and Integration
+# SWYNEX — Deployable Backend Service (Task 4)
 
-A Node.js + Express REST API with SQLite persistence, protected task endpoints, payload validation, and consistent JSON errors.
+A deployable Node.js + Express REST API with SQLite persistence, API-key authentication, payload validation, consistent JSON errors, sample requests, and deployment configuration.
 
 ## Features
+- Public GET / and GET /health health endpoints
+- SQLite persistence using better-sqlite3
+- Complete task CRUD: create, list, read one, update, and delete
+- API-key protection on every /tasks endpoint using x-api-key
+- Timing-safe API-key comparison and payload validation
+- Consistent JSON error responses and 10 KB request-body limit
+- Postman collections for CRUD and authentication/validation
+- Dockerfile and Render Blueprint for deployment
+- Configurable DATA_DIR for persistent SQLite storage
+- Sample task payloads in samples/tasks.json
 
-- Public `GET /` and `GET /health` health endpoints
-- SQLite persistence through `better-sqlite3`
-- Full task CRUD endpoints
-- API-key authentication using the `x-api-key` header
-- Timing-safe API-key comparison
-- Validation for required/unknown fields, title and description lengths, boolean completion state, and positive integer IDs
-- Consistent error response shape for API errors
-- JSON body limit of 10 KB
-- Postman collections for CRUD and Task 3 authentication testing
+## Run locally
+Requirements: Node.js 20+ and npm.
 
-## Requirements
+    git clone https://github.com/Avishekchaudhary01/SWYNEX-API-Project-Setup.git
+    cd SWYNEX-API-Project-Setup
+    npm install
+    Copy-Item .env.example .env
+    npm start
 
-- Node.js 18+
-- npm
-
-## Setup
-
-```bash
-git clone https://github.com/Avishekchaudhary01/SWYNEX-API-Project-Setup.git
-cd SWYNEX-API-Project-Setup
-npm install
-```
-
-Create your local environment file.
-
-PowerShell:
-```powershell
-Copy-Item .env.example .env
-```
-
-macOS/Linux:
-```bash
-cp .env.example .env
-```
-
-Open `.env` and replace the example `API_KEY` with a long, unique secret. Keep `.env` private; it is excluded from Git. Do not use the example key in a deployed application.
-
-Start the server:
-```bash
-npm start
-```
-
-The default URL is `http://localhost:3000`. SQLite creates `data/tasks.db` automatically. The `data/` directory and database files are excluded from Git.
+Use Copy-Item on PowerShell or cp .env.example .env on macOS/Linux. Edit .env and replace API_KEY with a long, unique secret. Never commit your real .env file. The server listens on http://localhost:3000 by default; check http://localhost:3000/health.
 
 ## Environment variables
+| Variable | Purpose |
+|---|---|
+| PORT | HTTP port; defaults to 3000 locally. Hosting providers may supply this. |
+| NODE_ENV | Environment label; defaults to development. |
+| API_KEY | Secret required for all /tasks routes. |
+| DATA_DIR | Optional database directory; defaults to the project's data directory. |
 
-| Variable | Default/example | Purpose |
-|---|---|---|
-| `PORT` | `3000` | HTTP port |
-| `NODE_ENV` | `development` | Environment label |
-| `API_KEY` | Set in your local `.env` | Secret required for all `/tasks` endpoints |
+If API_KEY is missing, protected task routes fail closed with 503 AUTH_NOT_CONFIGURED.
 
-If `API_KEY` is missing, task routes return `503 AUTH_NOT_CONFIGURED` rather than becoming unprotected.
+## API endpoints
+| Method | Endpoint | Access | Purpose |
+|---|---|---|---|
+| GET | / | Public | Service message |
+| GET | /health | Public | Health, uptime, timestamp, environment |
+| POST | /tasks | API key | Create task |
+| GET | /tasks | API key | List tasks |
+| GET | /tasks/:id | API key | Read one task |
+| PUT | /tasks/:id | API key | Update task fields |
+| DELETE | /tasks/:id | API key | Delete task |
 
-## Endpoints
+For task routes, add request header x-api-key with the exact value configured in .env or the hosting environment.
 
-| Method | Endpoint | Authentication |
-|---|---|---|
-| GET | `/` | Public |
-| GET | `/health` | Public |
-| POST | `/tasks` | `x-api-key` required |
-| GET | `/tasks` | `x-api-key` required |
-| GET | `/tasks/:id` | `x-api-key` required |
-| PUT | `/tasks/:id` | `x-api-key` required |
-| DELETE | `/tasks/:id` | `x-api-key` required |
+### Create task example
+POST /tasks with Content-Type: application/json and x-api-key headers:
 
-### Authentication
+    {
+      "title": "Learn Node.js",
+      "description": "Complete Task 4",
+      "completed": false
+    }
 
-For every task request, add this header in Postman:
+Expected status: 201 Created. Partial updates are supported for PUT /tasks/:id. Sample payloads are in samples/tasks.json; create them with POST /tasks to populate your database. Demo records are not inserted automatically.
 
-```
-x-api-key: YOUR_LOCAL_API_KEY
-```
-
-Use the exact value configured in your local `.env` file. The health endpoints remain public so they can be checked without credentials.
-
-### Create a task
-
-`POST http://localhost:3000/tasks`
-
-Headers: `Content-Type: application/json`, `x-api-key: YOUR_LOCAL_API_KEY`
-
-Body:
-```json
-{
-  "title": "Learn Node.js",
-  "description": "Complete Task 3",
-  "completed": false
-}
-```
-
-Returns `201 Created`.
-
-### Read tasks
-
-- `GET http://localhost:3000/tasks` — list tasks
-- `GET http://localhost:3000/tasks/1` — get a task by ID
-
-Both require the API-key header.
-
-### Update a task
-
-`PUT http://localhost:3000/tasks/1`
-
-Body:
-```json
-{
-  "completed": true
-}
-```
-
-Partial updates are supported. At least one valid field must be provided.
-
-### Delete a task
-
-`DELETE http://localhost:3000/tasks/1`
-
-Replace `1` with the ID of an existing task.
-
-## Consistent error responses
-
-All API errors use this shape:
-```json
-{
-  "error": {
-    "code": "UNAUTHORIZED",
-    "message": "A valid x-api-key header is required"
-  }
-}
-```
-
-Common status codes:
-
-- `400 VALIDATION_ERROR` — invalid body or ID
-- `401 UNAUTHORIZED` — missing or incorrect API key
-- `404 NOT_FOUND` — task does not exist
-- `404 ROUTE_NOT_FOUND` — unknown endpoint
-- `413 PAYLOAD_TOO_LARGE` — JSON body exceeds 10 KB
-- `503 AUTH_NOT_CONFIGURED` — server's API key is not configured
-- `500 INTERNAL_SERVER_ERROR` — unexpected server error
+## Error responses
+API errors use a consistent shape with error.code and error.message. Common status codes: 400 VALIDATION_ERROR, 401 UNAUTHORIZED, 404 NOT_FOUND or ROUTE_NOT_FOUND, 413 PAYLOAD_TOO_LARGE, 503 AUTH_NOT_CONFIGURED, and 500 INTERNAL_SERVER_ERROR.
 
 ## Test with Postman
+Import the collections in postman/: SWYNEX-API-Task2-CRUD.postman_collection.json and SWYNEX-API-Task3-Auth-Validation.postman_collection.json. For Task 3 tests, set the collection variable apiKey to your local .env API_KEY. Start the server before sending requests. Health checks are public; task endpoints require the key. Never commit real credentials.
 
-Import `postman/SWYNEX-API-Task3-Auth-Validation.postman_collection.json`.
+## Deployment option A: Render Blueprint
+This repository includes render.yaml. Push to GitHub, sign in to Render, choose New → Blueprint, connect this repository, and deploy. Confirm the generated API_KEY secret in the service environment. After deployment, visit the provided service URL plus /health. The Blueprint mounts a persistent disk at /var/data and sets DATA_DIR=/var/data so SQLite data can persist across restarts and deploys. A persistent disk may require a paid Render plan; verify current pricing and plan requirements. No live URL is claimed until you deploy it.
 
-1. Start the API with `npm start`.
-2. In the imported collection, edit the collection variable `apiKey` and set it to the same value as your local `.env` `API_KEY`.
-3. Run **Health Check** (no key required).
-4. Run **Protected route — missing key**; it should return `401`.
-5. Run **List tasks — valid key**; it should return `200`.
-6. Run **Create task — valid key**; it should return `201`.
-7. Try **Create task — invalid payload**; it should return `400`.
-8. Use a real task ID for get, update, and delete requests.
+## Deployment option B: Docker
+Build and run:
 
-The collection contains an example variable only. Do not save or commit a real API key in the repository.
+    docker build -t swynex-api .
+    docker run --rm -p 3000:3000 -e API_KEY="replace-with-a-long-random-secret" -e NODE_ENV=production -v swynex-data:/app/data swynex-api
 
-## Previous task
+Then visit http://localhost:3000/health. The named Docker volume stores the SQLite database outside the disposable container.
 
-The same repository retains the Task 2 SQLite CRUD implementation. This version extends it with authentication, stronger validation, and standard error responses.
+## Operational notes
+- Keep API_KEY in the hosting provider's secret/environment settings, never in source control.
+- SQLite is suitable for this learning project; use persistent storage when deploying.
+- Use HTTPS in production and rotate the key if exposed.
+- A successful local run is not the same as a live deployment. Add your actual hosted URL here after deployment.
+
+## Project history
+This repository builds on Task 2 (SQLite CRUD) and Task 3 (authentication and validation) and packages the service for Task 4 deployment.
